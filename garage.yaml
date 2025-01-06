@@ -24,6 +24,16 @@ logger:
 api:
   password: ""
 
+  on_client_connected:
+    - output.turn_on: led
+
+  on_client_disconnected:
+    - if:
+        condition:
+          api.connected:
+        then:
+          - output.turn_off: led
+
 ota:
   - platform: esphome
     password: ""
@@ -48,6 +58,12 @@ i2c:
   sda: GPIO22
   scl: GPIO23
   scan: false
+
+output:
+  - platform: ledc
+    pin: GPIO15
+    inverted: true
+    id: led
 
 binary_sensor:
   - platform: gpio
