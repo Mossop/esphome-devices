@@ -43,8 +43,8 @@ wifi:
   password: ""
 
   manual_ip:
-    static_ip: 10.10.96.1
-    gateway: 10.10.96.254
+    static_ip: 10.10.10.5
+    gateway: 10.10.15.254
     subnet: 255.255.255.0
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
@@ -81,3 +81,6 @@ sensor:
       name: "Temperature"
     humidity:
       name: "Humidity"
+
+  - platform: wifi_signal
+    name: "WiFi Signal"
