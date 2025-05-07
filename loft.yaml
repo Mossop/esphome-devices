@@ -1,0 +1,78 @@
+esphome:
+  name: loft-sensor
+  platformio_options:
+    platform: https://github.com/mnowak32/platform-espressif32.git#boards/seeed_xiao_esp32c6
+
+esp32:
+  board: seeed_xiao_esp32c6
+  variant: esp32c6
+  flash_size: 4MB
+  framework:
+    type: esp-idf
+    version: 5.2.1
+    platform_version: 6.9.0
+    sdkconfig_options:
+      CONFIG_ESPTOOLPY_FLASHSIZE_4MB: y
+
+# Enable logging
+logger:
+  baud_rate: 115200
+  level: DEBUG
+  hardware_uart: USB_SERIAL_JTAG
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+  on_client_connected:
+    - output.turn_on: led
+
+  on_client_disconnected:
+    - if:
+        condition:
+          api.connected:
+        then:
+          - output.turn_off: led
+
+ota:
+  - platform: esphome
+    password: ""
+
+wifi:
+  ssid: "MagnetIOT"
+  password: ""
+
+  manual_ip:
+    static_ip: 10.10.10.6
+    gateway: 10.10.15.254
+    subnet: 255.255.255.0
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Loft-Sensor Fallback Hotspot"
+    password: "wwhbTrI9hT2A"
+
+captive_portal:
+
+i2c:
+  sda: GPIO22
+  scl: GPIO23
+  scan: false
+
+output:
+  - platform: ledc
+    pin: GPIO15
+    inverted: true
+    id: led
+
+sensor:
+  - platform: htu21d
+    temperature:
+      name: "Temperature"
+    humidity:
+      name: "Humidity"
+    heater:
+      name: "Heater"
+
+  - platform: wifi_signal
+    name: "WiFi Signal"
