@@ -13,4 +13,28 @@ display:
       number: GPIO4
       inverted: true
     reset_pin: GPIO2
-    model: 7.50inv2p
+    model: 7.50inV2p
+
+
+font:
+  - file: "gfonts://Inter@700"
+    id: text16
+    size: 16
+  - file: "gfonts://Inter@700"
+    id: text24
+    size: 24
+  - file: "gfonts://Inter@400"
+    id: text32
+    size: 32
+  - file: "gfonts://Inter@400"
+    id: text40
+    size: 40
+  - file: "gfonts://Inter@400"
+    id: text48
+    size: 48
+  - file: "gfonts://Inter@400"
+    id: text56
+    size: 56
+  - file: "gfonts://Inter@400"
+    id: text64
+    size: 64

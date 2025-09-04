@@ -1,7 +1,11 @@
 esphome:
   name: display-office
   includes:
+    - "includes/shared.h"
     - "display-office.h"
+  on_boot:
+    - then:
+        - component.update: epaper
 
 
 packages:
@@ -10,8 +14,14 @@ packages:
   - !include includes/waveshare.yaml
 
 
-substitutions:
-  text_font: "gfonts://Roboto@400"
+font:
+  - file: "gfonts://Material+Symbols+Outlined"
+    id: icons256
+    size: 256
+    glyphs:
+      - "\U0000e63e"
+      - "\U0000f063"
+      - "\U0000e833"
 
 
 api:
@@ -48,22 +58,6 @@ time:
     on_time_sync:
       then:
         - component.update: epaper
-
-
-# define font to display words
-font:
-  - file: ${text_font}
-    id: font16
-    size: 16
-  - file: ${text_font}
-    id: font24
-    size: 24
-  - file: ${text_font}
-    id: font48
-    size: 48
-  - file: ${text_font}
-    id: font56
-    size: 56
 
 
 text_sensor:
