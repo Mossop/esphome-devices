@@ -1,18 +1,10 @@
 esphome:
   name: garage-motion
-  platformio_options:
-    platform: https://github.com/mnowak32/platform-espressif32.git#boards/seeed_xiao_esp32c6
 
 esp32:
   board: seeed_xiao_esp32c6
-  variant: esp32c6
-  flash_size: 4MB
   framework:
     type: esp-idf
-    version: 5.2.1
-    platform_version: 6.9.0
-    sdkconfig_options:
-      CONFIG_ESPTOOLPY_FLASHSIZE_4MB: y
 
 # Enable logging
 logger:
@@ -41,11 +33,7 @@ ota:
 wifi:
   ssid: "MagnetIOT"
   password: ""
-
-  manual_ip:
-    static_ip: 10.10.10.5
-    gateway: 10.10.15.254
-    subnet: 255.255.255.0
+  domain: .home.clantownsend.com
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
