@@ -1,21 +1,13 @@
 esphome:
   name: sensor-garage
 
-esp32:
-  board: seeed_xiao_esp32c6
-  framework:
-    type: esp-idf
 
-# Enable logging
-logger:
-  baud_rate: 115200
-  level: DEBUG
-  hardware_uart: USB_SERIAL_JTAG
+packages:
+  - !include includes/base.yaml
+  - !include includes/esp32c6.yaml
 
-# Enable Home Assistant API
+
 api:
-  password: ""
-
   on_client_connected:
     - output.turn_on: led
 
@@ -26,32 +18,16 @@ api:
         then:
           - output.turn_off: led
 
-ota:
-  - platform: esphome
-    password: ""
 
 wifi:
-  ssid: "MagnetIOT"
-  password: ""
-  domain: .home.clantownsend.com
-
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Garage-Motion Fallback Hotspot"
     password: "wwhbTrI9hT2A"
 
+
 captive_portal:
 
-i2c:
-  sda: GPIO22
-  scl: GPIO23
-  scan: false
-
-output:
-  - platform: ledc
-    pin: GPIO15
-    inverted: true
-    id: led
 
 binary_sensor:
   - platform: gpio
@@ -63,12 +39,10 @@ binary_sensor:
         input: true
         pulldown: true
 
+
 sensor:
   - platform: htu31d
     temperature:
       name: "Temperature"
     humidity:
       name: "Humidity"
-
-  - platform: wifi_signal
-    name: "WiFi Signal"

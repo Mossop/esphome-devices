@@ -1,0 +1,17 @@
+esp32:
+  board: seeed_xiao_esp32c6
+  framework:
+    type: esp-idf
+
+
+i2c:
+  sda: GPIO22
+  scl: GPIO23
+  scan: false
+
+
+output:
+  - platform: ledc
+    pin: GPIO15
+    inverted: true
+    id: led

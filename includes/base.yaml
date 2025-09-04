@@ -1,0 +1,36 @@
+# Enable logging
+logger:
+  baud_rate: 115200
+  level: DEBUG
+  hardware_uart: USB_SERIAL_JTAG
+
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+
+ota:
+  - platform: esphome
+    password: ""
+
+
+wifi:
+  id: net
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  domain: .home.clantownsend.com
+
+
+button:
+  - platform: restart
+    name: "Restart"
+
+
+sensor:
+  - platform: uptime
+    type: seconds
+    name: Uptime
+
+  - platform: wifi_signal
+    name: "WiFi Signal"
