@@ -1,5 +1,5 @@
 esphome:
-  name: garage-motion
+  name: sensor-garage
 
 esp32:
   board: seeed_xiao_esp32c6
