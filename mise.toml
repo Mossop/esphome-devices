@@ -1,8 +1,5 @@
 [tools]
-python = "3.11"
-
-[env]
-_.python.venv = { path = ".venv", create = true }
+"pipx:esphome" = { version = "latest", uvx_args = "--with pip" }
 
 [tasks.setup]
 run = "uv pip install -r requirements.txt"
