@@ -1,0 +1,16 @@
+# define SPI interface
+spi:
+  clk_pin: GPIO8
+  mosi_pin: GPIO10
+
+
+display:
+  - platform: waveshare_epaper
+    id: epaper
+    cs_pin: GPIO3
+    dc_pin: GPIO5
+    busy_pin:
+      number: GPIO4
+      inverted: true
+    reset_pin: GPIO2
+    model: 7.50inv2p

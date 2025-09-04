@@ -1,0 +1,117 @@
+esphome:
+  name: display-office
+  includes:
+    - "display-office.h"
+
+
+packages:
+  - !include includes/base.yaml
+  - !include includes/esp32c3.yaml
+  - !include includes/waveshare.yaml
+
+
+substitutions:
+  text_font: "gfonts://Roboto@400"
+
+
+api:
+  on_client_connected:
+    - component.update: epaper
+
+  on_client_disconnected:
+    - component.update: epaper
+
+
+wifi:
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Display-Office Fallback Hotspot"
+    password: "wwhbTrI9hT2A"
+
+  on_connect:
+    - component.update: epaper
+  on_disconnect:
+    - component.update: epaper
+
+
+captive_portal:
+
+
+time:
+  - platform: sntp
+    id: rtc
+    timezone: Europe/London
+    on_time:
+      - seconds: 0
+        then:
+          - component.update: epaper
+    on_time_sync:
+      then:
+        - component.update: epaper
+
+
+# define font to display words
+font:
+  - file: ${text_font}
+    id: font16
+    size: 16
+  - file: ${text_font}
+    id: font24
+    size: 24
+  - file: ${text_font}
+    id: font48
+    size: 48
+  - file: ${text_font}
+    id: font56
+    size: 56
+
+
+text_sensor:
+  - platform: homeassistant
+    id: current_event_summary
+    entity_id: sensor.current_event
+    on_value:
+      then:
+        - component.update: epaper
+  - platform: homeassistant
+    id: current_event_start
+    entity_id: sensor.current_event
+    attribute: start
+    on_value:
+      then:
+        - component.update: epaper
+  - platform: homeassistant
+    id: current_event_end
+    entity_id: sensor.current_event
+    attribute: end
+    on_value:
+      then:
+        - component.update: epaper
+  - platform: homeassistant
+    id: next_event_summary
+    entity_id: sensor.next_event
+    on_value:
+      then:
+        - component.update: epaper
+  - platform: homeassistant
+    id: next_event_start
+    entity_id: sensor.next_event
+    attribute: start
+    on_value:
+      then:
+        - component.update: epaper
+  - platform: homeassistant
+    id: next_event_end
+    entity_id: sensor.next_event
+    attribute: end
+    on_value:
+      then:
+        - component.update: epaper
+
+
+display:
+  - id: !extend epaper
+    update_interval: never
+    full_update_every: 50
+    lambda: |-
+      dashboard::render_dashboard(it);
