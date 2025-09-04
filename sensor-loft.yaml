@@ -1,5 +1,5 @@
 esphome:
-  name: loft-sensor
+  name: sensor-loft
 
 esp32:
   board: seeed_xiao_esp32c6
