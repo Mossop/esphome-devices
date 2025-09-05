@@ -14,6 +14,12 @@ packages:
   - !include includes/waveshare.yaml
 
 
+external_components:
+  - source:
+      type: local
+      path: external_components
+
+
 font:
   - file: "gfonts://Material+Symbols+Outlined"
     id: icons256
@@ -21,15 +27,6 @@ font:
     glyphs:
       - "\U0000e63e"
       - "\U0000f063"
-      - "\U0000e833"
-
-
-api:
-  on_client_connected:
-    - component.update: epaper
-
-  on_client_disconnected:
-    - component.update: epaper
 
 
 wifi:
@@ -40,6 +37,7 @@ wifi:
 
   on_connect:
     - component.update: epaper
+    - component.update: events
   on_disconnect:
     - component.update: epaper
 
@@ -48,7 +46,7 @@ captive_portal:
 
 
 time:
-  - platform: sntp
+  - platform: homeassistant
     id: rtc
     timezone: Europe/London
     on_time:
@@ -60,46 +58,22 @@ time:
         - component.update: epaper
 
 
-text_sensor:
-  - platform: homeassistant
-    id: current_event_summary
-    entity_id: sensor.current_event
-    on_value:
-      then:
-        - component.update: epaper
-  - platform: homeassistant
-    id: current_event_start
-    entity_id: sensor.current_event
-    attribute: start
-    on_value:
-      then:
-        - component.update: epaper
-  - platform: homeassistant
-    id: current_event_end
-    entity_id: sensor.current_event
-    attribute: end
-    on_value:
-      then:
-        - component.update: epaper
-  - platform: homeassistant
-    id: next_event_summary
-    entity_id: sensor.next_event
-    on_value:
-      then:
-        - component.update: epaper
-  - platform: homeassistant
-    id: next_event_start
-    entity_id: sensor.next_event
-    attribute: start
-    on_value:
-      then:
-        - component.update: epaper
-  - platform: homeassistant
-    id: next_event_end
-    entity_id: sensor.next_event
-    attribute: end
-    on_value:
-      then:
+http_request:
+
+
+homeassistant_api:
+  url: https://homeassistant.clantownsend.com/
+  token: !secret home_assistant_token
+
+
+calendar_events:
+  id: events
+  calendars:
+    - calendar.mozilla_copy
+    - calendar.personal
+  duration: 24h
+  on_update:
+    - then:
         - component.update: epaper
 
 
