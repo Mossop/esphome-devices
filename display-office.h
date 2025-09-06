@@ -56,6 +56,8 @@ void render_disconnected(esphome::display::Display & it) {
 }
 
 void render_hourly(esphome::display::Display & it, const weather_forecast::Forecast& forecast, int left, int right, int& y) {
+  it.line(left + DASHBOARD_MARGIN, y + DASHBOARD_SPACING / 2, right - DASHBOARD_MARGIN, y + DASHBOARD_SPACING / 2);
+
   Text icon(&id(icons64), condition_icon(forecast.condition));
   Bounds bounds = icon.render(it, left + DASHBOARD_SPACING, y + DASHBOARD_SPACING, TextAlign::TOP_LEFT);
 
@@ -74,6 +76,8 @@ void render_hourly(esphome::display::Display & it, const weather_forecast::Forec
 }
 
 void render_daily(esphome::display::Display & it, const weather_forecast::Forecast& forecast, int left, int right, int& y) {
+  it.line(left + DASHBOARD_MARGIN, y + DASHBOARD_SPACING / 2, right - DASHBOARD_MARGIN, y + DASHBOARD_SPACING / 2);
+
   Text icon(&id(icons64), condition_icon(forecast.condition));
   Bounds bounds = icon.render(it, left + DASHBOARD_SPACING, y + DASHBOARD_SPACING, TextAlign::TOP_LEFT);
 
