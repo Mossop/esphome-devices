@@ -1,8 +1,11 @@
 #define DASHBOARD_MARGIN 5
 #define DASHBOARD_SPACING 10
 
-#define WIFI_CONNECTED "\U0000e63e"
-#define WIFI_DISCONNECTED "\U0000f063"
+#define ICON_WIFI_CONNECTED "\U0000e63e"
+#define ICON_WIFI_DISCONNECTED "\U0000f063"
+#define ICON_FLIGHT "\U0000e6ca"
+
+#define KNOTS_TO_MPH 1.15078
 
 namespace dashboard {
 
@@ -49,9 +52,9 @@ void render_disconnected(esphome::display::Display & it) {
   }
 
   if (id(espnet).is_connected()) {
-    it.printf(it.get_width() / 2, it.get_height() - (DASHBOARD_SPACING * 4 + DASHBOARD_MARGIN), &id(icons256), TextAlign::BOTTOM_CENTER, WIFI_CONNECTED);
+    it.printf(it.get_width() / 2, it.get_height() - (DASHBOARD_SPACING * 4 + DASHBOARD_MARGIN), &id(icons256), TextAlign::BOTTOM_CENTER, ICON_WIFI_CONNECTED);
   } else {
-    it.printf(it.get_width() / 2, it.get_height() - (DASHBOARD_SPACING * 4 + DASHBOARD_MARGIN), &id(icons256), TextAlign::BOTTOM_CENTER, WIFI_DISCONNECTED);
+    it.printf(it.get_width() / 2, it.get_height() - (DASHBOARD_SPACING * 4 + DASHBOARD_MARGIN), &id(icons256), TextAlign::BOTTOM_CENTER, ICON_WIFI_DISCONNECTED);
   }
 }
 
@@ -188,6 +191,86 @@ void render_right(esphome::display::Display & it, int left, int right) {
   it.end_clipping();
 }
 
+void render_flight(esphome::display::Display & it, const flights::Flight& flight) {
+  int left = DASHBOARD_SPACING * 10;
+  int right = it.get_width() - DASHBOARD_SPACING * 10;
+  int top = DASHBOARD_SPACING * 5;
+  int bottom = it.get_height() - DASHBOARD_SPACING * 5;
+
+  int mid = (left + right) / 2;
+  int y = top;
+
+  it.filled_rectangle(left, y, right - left, bottom - y, COLOR_OFF);
+  it.rectangle(left, y, right - left, bottom - y);
+
+  it.start_clipping(left + DASHBOARD_MARGIN, y + DASHBOARD_MARGIN, right - DASHBOARD_MARGIN, bottom - DASHBOARD_MARGIN);
+
+  y += DASHBOARD_SPACING * 3;
+
+  Text icon(&id(icons64), ICON_FLIGHT);
+
+  if (!flight.flight_number.empty()) {
+    Text flight_number(&id(text64), flight.flight_number);
+
+    int icon_y = y;
+    int fn_y = y;
+    if (flight_number.height > icon.baseline) {
+      icon_y += (flight_number.height - icon.baseline) / 2;
+    } else {
+      fn_y += (icon.baseline - flight_number.height) / 2;
+    }
+
+    int width = icon.width + DASHBOARD_SPACING * 3 + flight_number.width;
+    int offset = (right - left - width) / 2;
+
+    icon.render(it, left + offset, icon_y, TextAlign::TOP_LEFT);
+    flight_number.render(it, right - offset, fn_y, TextAlign::TOP_RIGHT);
+
+    y = std::max(icon_y + icon.baseline, fn_y + flight_number.height) + DASHBOARD_SPACING * 3;
+  } else {
+    icon.render(it, mid, y, TextAlign::TOP_CENTER);
+    y += icon.baseline + DASHBOARD_SPACING * 3;
+  }
+
+  Text stats(&id(text24), "%.0f ft, %.0f mph, %.1f km away", flight.altitude, flight.ground_speed * KNOTS_TO_MPH, flight.distance);
+  Bounds bounds = stats.render(it, mid, y, TextAlign::TOP_CENTER);
+  y = bounds.bottom + DASHBOARD_SPACING * 3;
+
+  Text details(&id(text24), "%s (%s)", flight.aircraft_model.c_str(), flight.aircraft_registration.c_str());
+  bounds = details.render(it, mid, y, TextAlign::TOP_CENTER);
+
+  if (
+    !flight.airport_origin_city.empty() &&
+    !flight.airport_origin_country_name.empty() &&
+    !flight.airport_destination_city.empty() &&
+    !flight.airport_destination_country_name.empty()
+  ) {
+    Text origin_city(&id(text24), flight.airport_origin_city);
+    Text origin_country(&id(text24), flight.airport_origin_country_name);
+    Text destination_city(&id(text24), flight.airport_destination_city);
+    Text destination_country(&id(text24), flight.airport_destination_country_name);
+
+    y = bottom - DASHBOARD_SPACING * 3;
+
+    int city_height = std::max(origin_city.height, destination_city.height);
+    int country_height = std::max(origin_country.height, destination_country.height) / 2;
+    int country_pos = y - country_height / 2;
+    int city_pos = y - country_height - DASHBOARD_SPACING - city_height / 2;
+
+    it.start_clipping(left + DASHBOARD_MARGIN, top + DASHBOARD_MARGIN, mid - DASHBOARD_MARGIN, bottom - DASHBOARD_MARGIN);
+    origin_city.render(it, (left + mid) / 2, city_pos, TextAlign::CENTER);
+    origin_country.render(it, (left + mid) / 2, country_pos, TextAlign::CENTER);
+    it.end_clipping();
+
+    it.start_clipping(mid + DASHBOARD_MARGIN, top + DASHBOARD_MARGIN, right + DASHBOARD_MARGIN, bottom - DASHBOARD_MARGIN);
+    destination_city.render(it, (mid + right) / 2, city_pos, TextAlign::CENTER);
+    destination_country.render(it, (mid + right) / 2, country_pos, TextAlign::CENTER);
+    it.end_clipping();
+  }
+
+  it.end_clipping();
+}
+
 void render_dashboard(esphome::display::Display & it) {
   if (!id(rtc).now().is_valid() || !id(espnet).is_connected()) {
     render_disconnected(it);
@@ -198,6 +281,16 @@ void render_dashboard(esphome::display::Display & it) {
 
     render_left(it, 0, split);
     render_right(it, split, it.get_width());
+
+    const std::vector<flights::Flight> & flights = id(local_flights).get_flights();
+
+    auto flight = std::find_if(flights.begin(), flights.end(), [](const flights::Flight &f){
+      return f.on_ground == 0 && f.distance < 3.5;
+    });
+
+    if (flight != flights.end()) {
+      render_flight(it, *flight);
+    }
   }
 }
 

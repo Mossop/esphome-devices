@@ -3,7 +3,7 @@
 #include "esphome/core/component.h"
 #include "esphome/core/time.h"
 #include "esphome/components/http_request/http_request_idf.h"
-#include "../homeassistant_api/homeassistant_api.h"
+#include "esphome/components/homeassistant_api/homeassistant_api.h"
 
 namespace esphome {
 namespace calendar_events {

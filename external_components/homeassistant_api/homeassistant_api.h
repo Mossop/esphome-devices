@@ -28,6 +28,7 @@ class HomeAssistantApi : public Component {
 
     void set_token(const std::string &token) { this->token = token; }
 
+    bool state(const std::string &entity_id, const json::json_parse_t &cb);
     bool call_service(const std::string &domain, const std::string &service, const std::string &data = "");
     bool query_service(const std::string &domain, const std::string &service, const std::string &data, const json::json_parse_t &cb);
 

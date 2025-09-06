@@ -1,5 +1,7 @@
 esphome:
   name: display-office
+  platformio_options:
+    build_type: debug
   includes:
     - "includes/shared.h"
     - "display-office.h"
@@ -31,6 +33,7 @@ font:
     id: icons64
     size: 64
     glyphs:
+      - "\U0000e6ca"
       - "\U0000eb8b"
       - "\U0000e81a"
       - "\U0000f036"
@@ -57,6 +60,7 @@ wifi:
     - component.update: events
     - component.update: weather_daily
     - component.update: weather_hourly
+    - component.update: local_flights
   on_disconnect:
     - component.update: epaper
 
@@ -111,6 +115,15 @@ weather_forecast:
     on_update:
       - then:
           - component.update: epaper
+
+
+flights:
+  id: local_flights
+  entity_id: sensor.flightradar24_current_in_area
+  update_interval: 10s
+  on_update:
+    - then:
+        - component.update: epaper
 
 
 display:
