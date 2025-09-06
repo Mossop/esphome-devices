@@ -59,10 +59,10 @@ void render_disconnected(esphome::display::Display & it) {
 }
 
 void render_hourly(esphome::display::Display & it, const weather_forecast::Forecast& forecast, int left, int right, int& y) {
-  it.line(left + DASHBOARD_MARGIN, y + DASHBOARD_SPACING / 2, right - DASHBOARD_MARGIN, y + DASHBOARD_SPACING / 2);
+  it.line(left + DASHBOARD_MARGIN, y, right - DASHBOARD_MARGIN, y);
 
   Text icon(&id(icons64), condition_icon(forecast.condition));
-  Bounds bounds = icon.render(it, left + DASHBOARD_SPACING, y + DASHBOARD_SPACING, TextAlign::TOP_LEFT);
+  Bounds bounds = icon.render(it, left + DASHBOARD_SPACING, y + DASHBOARD_SPACING / 2, TextAlign::TOP_LEFT);
 
   Text time(
     &id(text24),
@@ -75,14 +75,14 @@ void render_hourly(esphome::display::Display & it, const weather_forecast::Forec
   Text temp(&id(text24), "%.0f°", forecast.temperature);
   temp.render(it, right - DASHBOARD_SPACING, bounds.top + icon.baseline, TextAlign::BOTTOM_RIGHT);
 
-  y = bounds.top + icon.baseline;
+  y = bounds.top + icon.baseline + DASHBOARD_MARGIN;
 }
 
 void render_daily(esphome::display::Display & it, const weather_forecast::Forecast& forecast, int left, int right, int& y) {
-  it.line(left + DASHBOARD_MARGIN, y + DASHBOARD_SPACING / 2, right - DASHBOARD_MARGIN, y + DASHBOARD_SPACING / 2);
+  it.line(left + DASHBOARD_MARGIN, y, right - DASHBOARD_MARGIN, y);
 
   Text icon(&id(icons64), condition_icon(forecast.condition));
-  Bounds bounds = icon.render(it, left + DASHBOARD_SPACING, y + DASHBOARD_SPACING, TextAlign::TOP_LEFT);
+  Bounds bounds = icon.render(it, left + DASHBOARD_SPACING, y + DASHBOARD_SPACING / 2, TextAlign::TOP_LEFT);
 
   Text time(
     &id(text24),
@@ -93,7 +93,7 @@ void render_daily(esphome::display::Display & it, const weather_forecast::Foreca
   Text temp(&id(text24), "%.0f°", forecast.temperature);
   temp.render(it, right - DASHBOARD_SPACING, bounds.top + icon.baseline, TextAlign::BOTTOM_RIGHT);
 
-  y = bounds.top + icon.baseline;
+  y = bounds.top + icon.baseline + DASHBOARD_MARGIN;
 }
 
 void render_left(esphome::display::Display & it, int left, int right) {
@@ -104,7 +104,7 @@ void render_left(esphome::display::Display & it, int left, int right) {
   // Current time
   Text time(&id(text56), id(rtc).now().strftime("%H:%M"));
   Bounds bounds = time.render(it, mid, DASHBOARD_SPACING * 2, TextAlign::TOP_CENTER);
-  int y = bounds.bottom;
+  int y = bounds.bottom + DASHBOARD_SPACING * 2;
 
   const std::vector<weather_forecast::Forecast> & hourly = id(weather_hourly).get_forecasts();
 
@@ -285,7 +285,7 @@ void render_dashboard(esphome::display::Display & it) {
     const std::vector<flights::Flight> & flights = id(local_flights).get_flights();
 
     auto flight = std::find_if(flights.begin(), flights.end(), [](const flights::Flight &f){
-      return f.on_ground == 0 && f.distance < 3.5;
+      return f.on_ground == 0 && f.distance < 3.0;
     });
 
     if (flight != flights.end()) {
