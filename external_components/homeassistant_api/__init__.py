@@ -15,7 +15,7 @@ CONF_HOMEASSISTANT_API_ID = "homeassistant_api_id"
 CONF_TOKEN = "token"
 CONF_URL = "url"
 
-CONFIG_SCHEMA = cv.Schema(
+CONFIG_API = cv.Schema(
     {
         cv.GenerateID(): cv.declare_id(HomeAssistantApi),
         cv.GenerateID(CONF_HTTP_REQUEST_ID): cv.use_id(HttpRequestComponent),
@@ -24,7 +24,17 @@ CONFIG_SCHEMA = cv.Schema(
     }
 ).extend(cv.COMPONENT_SCHEMA)
 
+CONFIG_SCHEMA = cv.Any(
+    cv.ensure_list(CONFIG_API),
+    CONFIG_API,
+)
+
 async def to_code(config):
+    if isinstance(config, list):
+        for conf in config:
+            await to_code(conf)
+        return
+
     paren = await cg.get_variable(config[CONF_HTTP_REQUEST_ID])
     var = cg.new_Pvariable(config[CONF_ID])
     cg.add(var.set_http_request(paren))

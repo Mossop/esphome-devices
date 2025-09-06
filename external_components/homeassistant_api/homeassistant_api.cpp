@@ -4,6 +4,56 @@
 namespace esphome {
 namespace homeassistant_api {
 
+// timegm fallback for environments without it
+static time_t timegm_utc(struct tm* tm) {
+  const char* tz = getenv("TZ");
+  bool had_tz = (tz != nullptr);
+  std::string old_tz = had_tz ? tz : std::string();
+
+  setenv("TZ", "UTC", 1);
+  tzset();
+  time_t t = mktime(tm);
+  if (had_tz) {
+    setenv("TZ", old_tz.c_str(), 1);
+  } else {
+    unsetenv("TZ");
+  }
+
+  tzset();
+
+  return t;
+}
+
+bool parse_iso8601(const char* s, ESPTime& out) {
+  // Parse date/time part
+  struct tm tm = {};
+  const char* trailing = strptime(s, "%Y-%m-%dT%H:%M:%S", &tm);
+  if (!trailing) {
+    return false;
+  }
+
+  tm.tm_isdst = -1;
+  time_t timestamp = timegm_utc(&tm);
+
+  if (*trailing == '+' || *trailing == '-') {
+    // Parse ±HH:MM
+    int sign = (*trailing == '-') ? -1 : 1; ++trailing;
+
+    int oh = 0, om = 0;
+    if (sscanf(trailing, "%2d:%2d", &oh, &om) != 2) {
+      return false;
+    }
+
+    timestamp -= sign * (oh * 3600 + om * 60);
+  } else if (*trailing && *trailing != 'Z') {
+    return false;
+  }
+
+  out = ESPTime::from_epoch_local(timestamp);
+
+  return true;
+}
+
 static const char *TAG = "homeassistant_api";
 
 void HomeAssistantApi::setup() {
@@ -76,6 +126,8 @@ bool HomeAssistantApi::query_service(
   size_t read_index = 0;
   int read;
   do {
+    yield();
+
     if (buf.size() - read_index < 512) {
       buf.resize(buf.size() + 1024);
     }

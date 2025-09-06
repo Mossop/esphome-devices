@@ -27,6 +27,23 @@ font:
     glyphs:
       - "\U0000e63e"
       - "\U0000f063"
+  - file: "gfonts://Material+Symbols+Outlined"
+    id: icons64
+    size: 64
+    glyphs:
+      - "\U0000eb8b"
+      - "\U0000e81a"
+      - "\U0000f036"
+      - "\U0000e2bd"
+      - "\U0000f172"
+      - "\U0000f176"
+      - "\U0000f61f"
+      - "\U0000e2cd"
+      - "\U0000f60b"
+      - "\U0000ebdb"
+      - "\U0000efd8"
+      - "\U0000e818"
+      - "\U0000f67f"
 
 
 wifi:
@@ -38,6 +55,8 @@ wifi:
   on_connect:
     - component.update: epaper
     - component.update: events
+    - component.update: weather_daily
+    - component.update: weather_hourly
   on_disconnect:
     - component.update: epaper
 
@@ -75,6 +94,23 @@ calendar_events:
   on_update:
     - then:
         - component.update: epaper
+
+
+weather_forecast:
+  - id: weather_hourly
+    entity_id: weather.openweathermap
+    type: hourly
+    update_interval: 10min
+    on_update:
+      - then:
+          - component.update: epaper
+  - id: weather_daily
+    entity_id: weather.openweathermap
+    type: daily
+    update_interval: 30min
+    on_update:
+      - then:
+          - component.update: epaper
 
 
 display:

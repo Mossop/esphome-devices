@@ -7,37 +7,41 @@ from ..homeassistant_api import HomeAssistantApi, CONF_HOMEASSISTANT_API_ID
 
 DEPENDENCIES = ["homeassistant_api"]
 
-calendar_events_ns = cg.esphome_ns.namespace("calendar_events")
-CalendarEvents = calendar_events_ns.class_(
-    "CalendarEvents", cg.PollingComponent
+weather_forecast_ns = cg.esphome_ns.namespace("weather_forecast")
+WeatherForecast = weather_forecast_ns.class_(
+    "WeatherForecast", cg.PollingComponent
 )
-Event = calendar_events_ns.struct("Event")
-UpdateTrigger = calendar_events_ns.class_(
+Event = weather_forecast_ns.struct("Event")
+UpdateTrigger = weather_forecast_ns.class_(
     "UpdateTrigger", automation.Trigger.template(cg.std_vector(Event))
 )
 
-CONF_DURATION = "duration"
-CONF_START_OFFSET = "start_offset"
-CONF_CALENDARS = "calendars"
+CONF_ENTITY_ID = "entity_id"
+CONF_TYPE = "type"
 
-CONFIG_CALENDAR_EVENTS = cv.Schema(
+def forecast_type(value):
+    value = cv.string_strict(value)
+    if value not in ["daily", "hourly", "twice_daily"]:
+        raise Invalid("Forecast type must be 'daily', 'hourly' or 'twice_daily'")
+    return value
+
+CONFIG_WEATHER_FORECAST = cv.Schema(
     {
-        cv.GenerateID(): cv.declare_id(CalendarEvents),
+        cv.GenerateID(): cv.declare_id(WeatherForecast),
         cv.GenerateID(CONF_HOMEASSISTANT_API_ID): cv.use_id(HomeAssistantApi),
-        cv.Required(CONF_CALENDARS): cv.ensure_list(cv.entity_id),
-        cv.Optional(CONF_START_OFFSET): cv.time_period,
-        cv.Required(CONF_DURATION): cv.positive_time_period_seconds,
+        cv.Required(CONF_ENTITY_ID): cv.entity_id,
+        cv.Required(CONF_TYPE): forecast_type,
         cv.Optional(CONF_ON_UPDATE): automation.validate_automation(
             {
                 cv.GenerateID(CONF_TRIGGER_ID): cv.declare_id(UpdateTrigger),
             }
         ),
     }
-).extend(cv.polling_component_schema("60s"))
+).extend(cv.polling_component_schema("10min"))
 
 CONFIG_SCHEMA = cv.Any(
-    cv.ensure_list(CONFIG_CALENDAR_EVENTS),
-    CONFIG_CALENDAR_EVENTS,
+    cv.ensure_list(CONFIG_WEATHER_FORECAST),
+    CONFIG_WEATHER_FORECAST,
 )
 
 async def to_code(config):
@@ -49,11 +53,8 @@ async def to_code(config):
     paren = await cg.get_variable(config[CONF_HOMEASSISTANT_API_ID])
     var = cg.new_Pvariable(config[CONF_ID])
     cg.add(var.set_homeassistant_api(paren))
-    cg.add(var.set_calendars(config[CONF_CALENDARS]))
-    if CONF_START_OFFSET in config:
-        cg.add(var.set_start_offset(config[CONF_START_OFFSET]))
-    if CONF_DURATION in config:
-        cg.add(var.set_duration(config[CONF_DURATION]))
+    cg.add(var.set_entity_id(config[CONF_ENTITY_ID]))
+    cg.add(var.set_type(config[CONF_TYPE]))
 
     for conf in config.get(CONF_ON_UPDATE, []):
         trigger = cg.new_Pvariable(conf[CONF_TRIGGER_ID], var)

@@ -30,6 +30,8 @@ class CalendarEvents : public PollingComponent {
     void update() override;
     void dump_config() override;
 
+    float get_setup_priority() const override { return setup_priority::AFTER_CONNECTION; }
+
     const std::vector<Event> &get_events() const { return this->events; }
 
     void add_on_state_callback(std::function<void()> &&callback) {
