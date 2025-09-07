@@ -4,12 +4,14 @@
 #define ICON_WIFI_CONNECTED "\U0000e63e"
 #define ICON_WIFI_DISCONNECTED "\U0000f063"
 #define ICON_FLIGHT "\U0000e6ca"
+#define ICON_EVENT_CURRENT "\U0000e878"
+#define ICON_EVENT_NEXT "\U0000f238"
 
 #define KNOTS_TO_MPH 1.15078
 
 namespace dashboard {
 
-using namespace shared;
+using namespace shared::display;
 
 #define ICON_UNKNOWN "\U0000eb8b"
 
@@ -17,7 +19,21 @@ std::string format_time(ESPTime time) {
   return time.strftime("%H:%M");
 }
 
+bool same_day(const ESPTime &a, const ESPTime &b) {
+  return a.year == b.year && a.day_of_year == b.day_of_year;
+}
+
 std::string format_day(ESPTime time) {
+  if (same_day(time, id(rtc).now())) {
+    return "";
+  }
+
+  ESPTime tomorrow = id(rtc).now();
+  tomorrow.increment_day();
+  if (same_day(time, tomorrow)) {
+    return "Tomorrow";
+  }
+
   return time.strftime("%A");
 }
 
@@ -61,8 +77,8 @@ void render_disconnected(esphome::display::Display & it) {
 void render_hourly(esphome::display::Display & it, const weather_forecast::Forecast& forecast, int left, int right, int& y) {
   it.line(left + DASHBOARD_MARGIN, y, right - DASHBOARD_MARGIN, y);
 
-  Text icon(&id(icons64), condition_icon(forecast.condition));
-  Bounds bounds = icon.render(it, left + DASHBOARD_SPACING, y + DASHBOARD_SPACING / 2, TextAlign::TOP_LEFT);
+  Icon icon(&id(icons64), condition_icon(forecast.condition));
+  Bounds bounds = icon.render(it, left + DASHBOARD_SPACING, y + DASHBOARD_SPACING / 2, Anchor::Top_Left);
 
   Text time(
     &id(text24),
@@ -70,30 +86,30 @@ void render_hourly(esphome::display::Display & it, const weather_forecast::Forec
     format_time(forecast.datetime).c_str(),
     format_time(ESPTime::from_epoch_local(forecast.datetime.timestamp + 3600)).c_str()
   );
-  time.render(it, right - DASHBOARD_SPACING, bounds.top, TextAlign::TOP_RIGHT);
+  time.render(it, right - DASHBOARD_SPACING, bounds.top, Anchor::Top_Right);
 
   Text temp(&id(text24), "%.0f°", forecast.temperature);
-  temp.render(it, right - DASHBOARD_SPACING, bounds.top + icon.baseline, TextAlign::BOTTOM_RIGHT);
+  temp.render(it, right - DASHBOARD_SPACING, bounds.bottom, Anchor::Bottom_Right);
 
-  y = bounds.top + icon.baseline + DASHBOARD_MARGIN;
+  y = bounds.bottom + DASHBOARD_MARGIN;
 }
 
 void render_daily(esphome::display::Display & it, const weather_forecast::Forecast& forecast, int left, int right, int& y) {
   it.line(left + DASHBOARD_MARGIN, y, right - DASHBOARD_MARGIN, y);
 
-  Text icon(&id(icons64), condition_icon(forecast.condition));
-  Bounds bounds = icon.render(it, left + DASHBOARD_SPACING, y + DASHBOARD_SPACING / 2, TextAlign::TOP_LEFT);
+  Icon icon(&id(icons64), condition_icon(forecast.condition));
+  Bounds bounds = icon.render(it, left + DASHBOARD_SPACING, y + DASHBOARD_SPACING / 2, Anchor::Top_Left);
 
   Text time(
     &id(text24),
     format_day(forecast.datetime).c_str()
   );
-  time.render(it, right - DASHBOARD_SPACING, bounds.top, TextAlign::TOP_RIGHT);
+  time.render(it, right - DASHBOARD_SPACING, bounds.top, Anchor::Top_Right);
 
   Text temp(&id(text24), "%.0f°", forecast.temperature);
-  temp.render(it, right - DASHBOARD_SPACING, bounds.top + icon.baseline, TextAlign::BOTTOM_RIGHT);
+  temp.render(it, right - DASHBOARD_SPACING, bounds.bottom, Anchor::Bottom_Right);
 
-  y = bounds.top + icon.baseline + DASHBOARD_MARGIN;
+  y = bounds.bottom + DASHBOARD_MARGIN;
 }
 
 void render_left(esphome::display::Display & it, int left, int right) {
@@ -103,7 +119,7 @@ void render_left(esphome::display::Display & it, int left, int right) {
 
   // Current time
   Text time(&id(text56), id(rtc).now().strftime("%H:%M"));
-  Bounds bounds = time.render(it, mid, DASHBOARD_SPACING * 2, TextAlign::TOP_CENTER);
+  Bounds bounds = time.render(it, mid, DASHBOARD_SPACING * 2, Anchor::Top_Center);
   int y = bounds.bottom + DASHBOARD_SPACING * 2;
 
   const std::vector<weather_forecast::Forecast> & hourly = id(weather_hourly).get_forecasts();
@@ -151,12 +167,12 @@ void render_right(esphome::display::Display & it, int left, int right) {
     y += DASHBOARD_SPACING;
 
     Text summary(&id(text48), current_event.summary);
-    Bounds bounds = summary.render(it, mid, y, TextAlign::TOP_CENTER);
+    Bounds bounds = summary.render(it, mid, y, Anchor::Top_Center);
 
     y = bounds.bottom + DASHBOARD_SPACING;
 
     Text time(&id(text24), "%s - %s", start.c_str(), end.c_str());
-    bounds = time.render(it, mid, y, TextAlign::TOP_CENTER);
+    bounds = time.render(it, mid, y, Anchor::Top_Center);
 
     y = bounds.bottom + DASHBOARD_SPACING;
     it.line(left + DASHBOARD_MARGIN, y, right - DASHBOARD_SPACING, y);
@@ -171,21 +187,26 @@ void render_right(esphome::display::Display & it, int left, int right) {
       continue;
     }
 
+    std::string day = format_day(next_event.start);
     std::string start = format_time(next_event.start);
     std::string end = format_time(next_event.end);
 
     y += DASHBOARD_SPACING;
 
+    Icon icon(&id(icons24), ICON_EVENT_NEXT);
     Text summary(&id(text24), next_event.summary);
-    Bounds bounds = summary.render(it, left + DASHBOARD_SPACING, y, TextAlign::TOP_LEFT);
+    Row row(Align::Center, &id(text24));
+    row.add(&icon);
+    row.add(&summary);
+    Bounds bounds = row.render(it, left + DASHBOARD_SPACING, y, Anchor::Top_Left);
 
     y = bounds.bottom + DASHBOARD_SPACING;
 
-    Text time(&id(text16), "%s - %s", start.c_str(), end.c_str());
-    bounds = time.render(it, right - DASHBOARD_SPACING, y, TextAlign::TOP_RIGHT);
+    Text time(&id(text16), "%s %s - %s", day.c_str(), start.c_str(), end.c_str());
+    bounds = time.render(it, right - DASHBOARD_SPACING, y, Anchor::Top_Right);
 
     y = bounds.bottom + DASHBOARD_SPACING;
-    it.line(left + DASHBOARD_MARGIN, y, right - DASHBOARD_SPACING, y);
+    it.line(left + DASHBOARD_MARGIN, y, right - DASHBOARD_MARGIN, y);
   }
 
   it.end_clipping();
@@ -207,37 +228,28 @@ void render_flight(esphome::display::Display & it, const flights::Flight& flight
 
   y += DASHBOARD_SPACING * 3;
 
-  Text icon(&id(icons64), ICON_FLIGHT);
+  Icon icon(&id(icons64), ICON_FLIGHT);
 
   if (!flight.flight_number.empty()) {
     Text flight_number(&id(text64), flight.flight_number);
+    Row row(Align::Baseline, &id(text64));
+    row.add(&icon);
+    row.add(&flight_number);
 
-    int icon_y = y;
-    int fn_y = y;
-    if (flight_number.height > icon.baseline) {
-      icon_y += (flight_number.height - icon.baseline) / 2;
-    } else {
-      fn_y += (icon.baseline - flight_number.height) / 2;
-    }
+    row.render(it, mid, y, Anchor::Top_Center);
 
-    int width = icon.width + DASHBOARD_SPACING * 3 + flight_number.width;
-    int offset = (right - left - width) / 2;
-
-    icon.render(it, left + offset, icon_y, TextAlign::TOP_LEFT);
-    flight_number.render(it, right - offset, fn_y, TextAlign::TOP_RIGHT);
-
-    y = std::max(icon_y + icon.baseline, fn_y + flight_number.height) + DASHBOARD_SPACING * 3;
+    y = y + row.height + DASHBOARD_SPACING * 3;
   } else {
-    icon.render(it, mid, y, TextAlign::TOP_CENTER);
-    y += icon.baseline + DASHBOARD_SPACING * 3;
+    icon.render(it, mid, y, Anchor::Top_Center);
+    y += icon.height + DASHBOARD_SPACING * 3;
   }
 
   Text stats(&id(text24), "%.0f ft, %.0f mph, %.1f km away", flight.altitude, flight.ground_speed * KNOTS_TO_MPH, flight.distance);
-  Bounds bounds = stats.render(it, mid, y, TextAlign::TOP_CENTER);
+  Bounds bounds = stats.render(it, mid, y, Anchor::Top_Center);
   y = bounds.bottom + DASHBOARD_SPACING * 3;
 
   Text details(&id(text24), "%s (%s)", flight.aircraft_model.c_str(), flight.aircraft_registration.c_str());
-  bounds = details.render(it, mid, y, TextAlign::TOP_CENTER);
+  bounds = details.render(it, mid, y, Anchor::Top_Center);
 
   if (
     !flight.airport_origin_city.empty() &&
@@ -247,24 +259,23 @@ void render_flight(esphome::display::Display & it, const flights::Flight& flight
   ) {
     Text origin_city(&id(text24), flight.airport_origin_city);
     Text origin_country(&id(text24), flight.airport_origin_country_name);
+    Column origin(Align::Center, DASHBOARD_SPACING);
+    origin.add(&origin_city);
+    origin.add(&origin_country);
     Text destination_city(&id(text24), flight.airport_destination_city);
     Text destination_country(&id(text24), flight.airport_destination_country_name);
+    Column destination(Align::Center, DASHBOARD_SPACING);
+    destination.add(&destination_city);
+    destination.add(&destination_country);
 
     y = bottom - DASHBOARD_SPACING * 3;
 
-    int city_height = std::max(origin_city.height, destination_city.height);
-    int country_height = std::max(origin_country.height, destination_country.height) / 2;
-    int country_pos = y - country_height / 2;
-    int city_pos = y - country_height - DASHBOARD_SPACING - city_height / 2;
-
     it.start_clipping(left + DASHBOARD_MARGIN, top + DASHBOARD_MARGIN, mid - DASHBOARD_MARGIN, bottom - DASHBOARD_MARGIN);
-    origin_city.render(it, (left + mid) / 2, city_pos, TextAlign::CENTER);
-    origin_country.render(it, (left + mid) / 2, country_pos, TextAlign::CENTER);
+    origin.render(it, (left + mid) / 2, y, Anchor::Bottom_Center);
     it.end_clipping();
 
     it.start_clipping(mid + DASHBOARD_MARGIN, top + DASHBOARD_MARGIN, right + DASHBOARD_MARGIN, bottom - DASHBOARD_MARGIN);
-    destination_city.render(it, (mid + right) / 2, city_pos, TextAlign::CENTER);
-    destination_country.render(it, (mid + right) / 2, country_pos, TextAlign::CENTER);
+    destination.render(it, (mid + right) / 2, y, Anchor::Bottom_Center);
     it.end_clipping();
   }
 

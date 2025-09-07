@@ -3,7 +3,6 @@ esphome:
   platformio_options:
     build_type: debug
   includes:
-    - "includes/shared.h"
     - "display-office.h"
   on_boot:
     - then:
@@ -47,6 +46,18 @@ font:
       - "\U0000efd8"
       - "\U0000e818"
       - "\U0000f67f"
+  - file: "gfonts://Material+Symbols+Outlined"
+    id: icons24
+    size: 24
+    glyphs:
+      - "\U0000f238"
+      - "\U0000e878"
+  - id: !extend text24
+    extras:
+      - file: "gfonts://Material+Symbols+Outlined"
+        glyphs:
+          - "\U0000f238"
+          - "\U0000e878"
 
 
 wifi:

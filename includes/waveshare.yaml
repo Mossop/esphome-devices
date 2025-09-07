@@ -1,3 +1,8 @@
+esphome:
+  includes:
+    - "includes/display.h"
+    - "includes/display.cpp"
+
 # define SPI interface
 spi:
   clk_pin: GPIO8
