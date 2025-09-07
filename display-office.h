@@ -124,15 +124,27 @@ void render_left(esphome::display::Display & it, int left, int right) {
 
   const std::vector<weather_forecast::Forecast> & hourly = id(weather_hourly).get_forecasts();
 
-  if (hourly.size() >= 3) {
-    render_hourly(it, hourly[0], left, right, y);
-    render_hourly(it, hourly[1], left, right, y);
-    render_hourly(it, hourly[2], left, right, y);
+  ESPTime now = id(rtc).now();
+  auto hit = std::partition_point(hourly.begin(), hourly.end(), [&](const weather_forecast::Forecast& f){ return f.datetime <= now; });
+
+  std::vector<weather_forecast::Forecast> out;
+  out.reserve(hit - hourly.begin());
+  if (hit != hourly.begin()) {
+    out.push_back(*(hit - 1));
+  }
+  out.insert(out.end(), hit, hourly.end());
+
+  if (out.size() > 0) {
+    render_hourly(it, out[0], left, right, y);
+  }
+  if (out.size() > 1) {
+    render_hourly(it, out[1], left, right, y);
   }
 
   const std::vector<weather_forecast::Forecast> & daily = id(weather_daily).get_forecasts();
-  if (daily.size() > 1) {
+  if (daily.size() > 2) {
     render_daily(it, daily[1], left, right, y);
+    render_daily(it, daily[2], left, right, y);
   }
 
   it.end_clipping();
