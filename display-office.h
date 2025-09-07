@@ -178,8 +178,13 @@ void render_right(esphome::display::Display & it, int left, int right) {
 
     y += DASHBOARD_SPACING;
 
+    Icon icon(&id(icons48), ICON_EVENT_CURRENT);
     Text summary(&id(text48), current_event.summary);
-    Bounds bounds = summary.render(it, mid, y, Anchor::Top_Center);
+    CroppedRow summary_row(Align::Center, &id(text48), right - left - DASHBOARD_SPACING * 2);
+    summary_row.add(&icon);
+    summary_row.add(&summary);
+
+    Bounds bounds = summary_row.render(it, mid, y, Anchor::Top_Center);
 
     y = bounds.bottom + DASHBOARD_SPACING;
 
@@ -207,7 +212,7 @@ void render_right(esphome::display::Display & it, int left, int right) {
 
     Icon icon(&id(icons24), ICON_EVENT_NEXT);
     Text summary(&id(text24), next_event.summary);
-    Row row(Align::Center, &id(text24));
+    CroppedRow row(Align::Center, &id(text24), right - left - DASHBOARD_SPACING * 2);
     row.add(&icon);
     row.add(&summary);
     Bounds bounds = row.render(it, left + DASHBOARD_SPACING, y, Anchor::Top_Left);

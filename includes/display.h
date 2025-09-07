@@ -73,19 +73,32 @@ class Text : public Renderable {
 
 class Row : public Renderable {
   public:
-    Row(Align align, int spacing);
     Row(Align align, esphome::font::Font * font);
 
     void add(Renderable * item);
 
     Bounds render(esphome::display::Display & it, int x, int y, Anchor align) const;
 
-  private:
+  protected:
     Align align;
     int spacing;
     int above_baseline = 0;
     int below_baseline = 0;
     std::vector<Renderable*> items;
+
+    int item_offset(const Renderable* item) const;
+};
+
+class CroppedRow : public Row {
+  public:
+    CroppedRow(Align align, esphome::font::Font * font, int max_width, int cropped_margin = 5);
+
+    Bounds render(esphome::display::Display & it, int x, int y, Anchor align) const;
+
+  protected:
+    int max_width;
+    int cropped_margin;
+    esphome::font::Font * font;
 };
 
 class Column : public Renderable {

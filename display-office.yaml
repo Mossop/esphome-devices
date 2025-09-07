@@ -47,17 +47,15 @@ font:
       - "\U0000e818"
       - "\U0000f67f"
   - file: "gfonts://Material+Symbols+Outlined"
+    id: icons48
+    size: 48
+    glyphs:
+      - "\U0000e878"
+  - file: "gfonts://Material+Symbols+Outlined"
     id: icons24
     size: 24
     glyphs:
       - "\U0000f238"
-      - "\U0000e878"
-  - id: !extend text24
-    extras:
-      - file: "gfonts://Material+Symbols+Outlined"
-        glyphs:
-          - "\U0000f238"
-          - "\U0000e878"
 
 
 wifi:
@@ -131,7 +129,7 @@ weather_forecast:
 flights:
   id: local_flights
   entity_id: sensor.flightradar24_current_in_area
-  update_interval: 10s
+  update_interval: 5s
   on_update:
     - then:
         - component.update: epaper

@@ -79,12 +79,6 @@ Bounds Text::render(esphome::display::Display & it, int x, int y, Anchor align) 
   return Bounds { x, y, x + width, y + height };
 }
 
-Row::Row(Align align, int spacing)
-    : align(align), spacing(spacing) {
-  width = 0;
-  height = 0;
-}
-
 Row::Row(Align align, esphome::font::Font * font)
     : align(align), spacing(font_space(font)) {
   width = 0;
@@ -109,32 +103,65 @@ void Row::add(Renderable * item) {
   }
 }
 
-Bounds Row::render(esphome::display::Display & it, int x, int y, Anchor align) const {
-  translate(x, y, this, align);
+int Row::item_offset(const Renderable* item) const {
+  switch (this->align) {
+    case Align::Center:
+      return (height - item->height) / 2;
+    case Align::End:
+      return height - item->height;
+    case Align::Baseline:
+      return (above_baseline - item->baseline) / 2;
+  }
+
+  return 0;
+}
+
+Bounds Row::render(esphome::display::Display & it, int x, int y, Anchor anchor) const {
+  translate(x, y, this, anchor);
 
   for (auto item : items) {
-    int item_y;
-
-    switch (this->align) {
-      case Align::Start:
-        item_y = y;
-        break;
-      case Align::Center:
-        item_y = y + (height - item->height) / 2;
-        break;
-      case Align::End:
-        item_y = y + (height - item->height);
-        break;
-      case Align::Baseline:
-        item_y = y + (above_baseline - item->baseline) / 2;
-        break;
-    }
-
-    item->render(it, x, item_y, Anchor::Top_Left);
+    item->render(it, x, y + item_offset(item), Anchor::Top_Left);
     x += item->width + spacing;
   }
 
   return Bounds { x, y, x + width, y + height };
+}
+
+CroppedRow::CroppedRow(Align align, esphome::font::Font * font, int max_width, int cropped_margin)
+    : Row(align, font), max_width(max_width), font(font), cropped_margin(cropped_margin) {
+}
+
+Bounds CroppedRow::render(esphome::display::Display & it, int x, int y, Anchor anchor) const {
+  if (width <= max_width) {
+    return Row::render(it, x, y, anchor);
+  }
+
+  translate(x, y, this, anchor);
+
+  switch (anchor) {
+    case Anchor::Top_Center:
+    case Anchor::Center:
+    case Anchor::Bottom_Center:
+      x += (width - max_width) / 2;
+      break;
+    case Anchor::Top_Right:
+    case Anchor::Center_Right:
+    case Anchor::Bottom_Right:
+      x += width - max_width;
+  }
+
+  Text ellipsis(font, "...");
+
+  it.start_clipping(x, 0, x + max_width - ellipsis.width - cropped_margin, it.get_height());
+  Row::render(it, x, y, Anchor::Top_Left);
+  it.end_clipping();
+
+  const Renderable* last = items.back();
+  int last_baseline = y + item_offset(last) + last->baseline;
+
+  ellipsis.render(it, x + max_width - ellipsis.width, last_baseline - ellipsis.baseline, Anchor::Top_Left);
+
+  return Bounds { x, y, x + max_width, y + height };
 }
 
 Column::Column(Align align, int spacing)
@@ -158,8 +185,8 @@ void Column::add(Renderable * item) {
   }
 }
 
-Bounds Column::render(esphome::display::Display & it, int x, int y, Anchor align) const {
-  translate(x, y, this, align);
+Bounds Column::render(esphome::display::Display & it, int x, int y, Anchor anchor) const {
+  translate(x, y, this, anchor);
 
   for (auto item : items) {
     int item_x;
